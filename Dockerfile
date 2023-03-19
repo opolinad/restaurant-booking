@@ -12,7 +12,7 @@ WORKDIR $DockerHOME
 # install dependencies
 RUN pip install --upgrade pip
 
-# copy whole project to your docker home directory.
+# copy requirements to your docker home directory.
 COPY requirements.txt $DockerHOME
 
 # run this command to install all dependencies

@@ -1,5 +1,6 @@
 services:
   postgres:
+    container_name: postgres
     image: postgis/postgis:15-3.3-alpine
     volumes:
       - ./data_db:/var/lib/postgresql/data
@@ -9,12 +10,20 @@ services:
       - POSTGRES_DB=$DB_NAME
       - POSTGRES_USER=$DB_USER
       - POSTGRES_PASSWORD=$DB_PASSWORD
+    healthcheck:
+      test: pg_isready
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
   web:
+    container_name: web
     build: .
-    command: python manage.py runserver
+    command: python manage.py runserver 0.0.0.0:8000
     ports:
       - 8000:8000
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     volumes:
       - ./restaurant_booking:/home/web
