@@ -4,7 +4,7 @@ from main.models import Restaurant
 
 
 def seed_database(apps, schema_editor):
-    for row in DictReader(open('D:/Programación/Retos/restaurant-booking/restaurantes.csv', encoding="utf8")):
+    for row in DictReader(open('restaurantes.csv', encoding="utf8")):
         restaurant = Restaurant(
             id = row['id'],
             rating = row['rating'],
