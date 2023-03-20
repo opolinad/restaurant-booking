@@ -41,10 +41,6 @@ def restaurants(request, id=None):
             return JsonResponse({'error': 'Internal server error'}, status=500)
 
 
-def statistics(request):
-    return JsonResponse(data)
-
-
 def validate_restaurant_data(request):
     restaurant_information = json.loads(request.body.decode('utf-8'))
 
@@ -66,3 +62,29 @@ def restaurant_exists(id):
             'The restaurant you are looking for does not exist', 404)
 
     return restaurant
+
+
+def statistics(request):
+    try:
+        latitude = request.GET.get('latitude')
+        longitude = request.GET.get('longitude')
+        radius = request.GET.get('radius')
+
+        if None in [latitude, longitude, radius]:
+            raise UserException('Make sure all of the following information is present (as query params): latitude, longitude and radius', 400)
+
+        restaurants = Restaurant.objects.raw(f'''select 1 as id, count(id), avg(rating), stddev(rating)
+            from (SELECT *, ST_SetSRID(ST_MakePoint(mr.lng  , mr.lat), 4326) as point
+                from main_restaurant mr) gd
+            where ST_DWITHIN(gd.point::geography, ST_SetSRID(ST_MakePoint({longitude}, {latitude}),4326)::geography, {radius} );
+            ''')[0]
+        return JsonResponse({'count': restaurants.count, 'avg': restaurants.avg, 'std': restaurants.stddev})
+    except Exception as e:
+        print("Error", str(e))
+        if isinstance(e, UserException):
+            return JsonResponse({'error': e.message}, status=e.status)
+        else:
+            return JsonResponse({'error': 'Internal server error'}, status=500)
+
+def not_found(request):
+    return JsonResponse({'error': 'Route not found'}, status=404)
